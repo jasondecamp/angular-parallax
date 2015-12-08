@@ -65,7 +65,7 @@ function($window,$timeout,$parse) {
 
       // cleanup
       $scope.$on('$destroy', function() {
-        document.unbind('.parallax');
+        angular.element(document).unbind('.parallax');
       });
     }  // link function
   };
@@ -95,7 +95,7 @@ function($window,$timeout,$parse) {
 
       // cleanup
       $scope.$on('$destroy', function() {
-        document.unbind('.parallax');
+        angular.element(document).unbind('.parallax');
       });
 
     }  // link function
