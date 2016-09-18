@@ -27,7 +27,8 @@ function($window,$timeout,$parse) {
             offset: 0,
             bounce: false
           },
-          fade: false
+          fade: false,
+          start: 'relative'
         },
         options = angular.merge({},defaults,$scope.parallax);
 
@@ -36,10 +37,11 @@ function($window,$timeout,$parse) {
         elem.css('transform','translate(0px, 0px)');
         centerScrollDistance =
           elem.offset().top + elem.outerHeight()/2 -$window.innerHeight/2
-        offsetStart = {
-          vertical: centerScrollDistance*options.vertical.ratio,
-          horizontal: centerScrollDistance*options.horizontal.ratio,
-        }
+        if(options.start == 'relative')
+          offsetStart = {
+            vertical: centerScrollDistance*options.vertical.ratio,
+            horizontal: centerScrollDistance*options.horizontal.ratio,
+          };
         update();
       }
 
@@ -54,18 +56,22 @@ function($window,$timeout,$parse) {
         if(options.vertical.bounce && (currentScroll > centerScrollDistance))
           offset.vertical = -offset.vertical;
         elem.css('transform','translate('+offset.horizontal+'px, '+offset.vertical+'px)');
-        if(options.fade)
+        if(options.fade && options.start == 'relative')
           elem.css('opacity', 1-Math.min(Math.abs(centerScrollDistance-currentScroll)/($window.innerHeight/2),1));
+        else if(options.fade)
+          elem.css('opacity', 1-Math.min(currentScroll/($window.innerHeight/2),1));
       };
 
       $timeout(init,0);
-      angular.element($window).bind("resize.parallax", init);
-      angular.element($window).bind("scroll.parallax", update);
-      angular.element($window).bind("touchmove.parallax", update);
+      angular.element($window).bind("resize", init);
+      angular.element($window).bind("scroll", update);
+      angular.element($window).bind("touchmove", update);
 
       // cleanup
       $scope.$on('$destroy', function() {
-        angular.element(document).unbind('.parallax');
+        angular.element($window).unbind("resize", init);
+        angular.element($window).unbind("scroll", update);
+        angular.element($window).unbind("touchmove", update);
       });
     }  // link function
   };
@@ -81,21 +87,19 @@ function($window,$timeout,$parse) {
       var setPosition = function () {
         var calcValY = (elem.prop('offsetTop') - $window.pageYOffset) * ($scope.parallaxRatio ? $scope.parallaxRatio : 1.1 );
         // horizontal positioning
-        elem.css('background-position', "50% " + calcValY + "px");
+        $scope.$apply(elem.css('background-position', "50% " + calcValY + "px"));
       };
 
       // set our initial position - fixes webkit background render bug
-      angular.element($window).bind('load.parallax', function(e) {
-        setPosition();
-        $scope.$apply();
-      });
-
-      angular.element($window).bind("scroll.parallax", setPosition);
-      angular.element($window).bind("touchmove.parallax", setPosition);
+      angular.element($window).bind('load', setPosition);
+      angular.element($window).bind("scroll", setPosition);
+      angular.element($window).bind("touchmove", setPosition);
 
       // cleanup
       $scope.$on('$destroy', function() {
-        angular.element(document).unbind('.parallax');
+        angular.element($window).unbind('load', setPosition);
+        angular.element($window).unbind("scroll", setPosition);
+        angular.element($window).unbind("touchmove", setPosition);
       });
 
     }  // link function
